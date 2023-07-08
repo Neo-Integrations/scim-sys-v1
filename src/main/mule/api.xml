@@ -1,0 +1,929 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<http:listener-config
+		name="api-httpListenerConfig">
+		<http:listener-connection host="0.0.0.0"
+			port="8081" />
+	</http:listener-config>
+	<apikit:config name="api-config" api="api.raml"
+		outboundHeadersMapName="outboundHeaders"
+		httpStatusVarName="httpStatus" />
+	<os:object-store name="Object_store"
+		doc:name="Object store" doc:id="e951b92f-2bc5-463d-9b7e-a9e4fc2b5560"
+		maxEntries="5000" />
+	<flow name="api-main">
+		<http:listener config-ref="api-httpListenerConfig"
+			path="/api/*">
+			<http:response
+				statusCode="#[vars.httpStatus default 200]">
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:response>
+			<http:error-response
+				statusCode="#[vars.httpStatus default 500]">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:error-response>
+		</http:listener>
+		<apikit:router config-ref="api-config" />
+		<error-handler>
+			<on-error-propagate type="APIKIT:BAD_REQUEST">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">400
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_FOUND">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">404
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate
+				type="APIKIT:METHOD_NOT_ALLOWED">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">405
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">406
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate
+				type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">415
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">501
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="api-console">
+		<http:listener config-ref="api-httpListenerConfig"
+			path="/console/*">
+			<http:response
+				statusCode="#[vars.httpStatus default 200]">
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:response>
+			<http:error-response
+				statusCode="#[vars.httpStatus default 500]">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:error-response>
+		</http:listener>
+		<apikit:console config-ref="api-config" />
+		<error-handler>
+			<on-error-propagate type="APIKIT:NOT_FOUND">
+				<ee:transform>
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">404
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="put:\Users\(id):application\json:api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[payload.userName]" doc:name="Set Username" doc:id="26d400ed-37d6-4480-9898-531be7538af9" variableName="userName"/>
+		<os:retrieve doc:name="Retrieve" doc:id="a350e60a-3cf4-4322-8bbb-ff6447d1e1d3" key='#[vars.userName ++ ":" ++ vars.id]' objectStore="Object_store" target="found">
+			<os:default-value ><![CDATA[#['NOT_FOUND']]]></os:default-value>
+		</os:retrieve>
+		<choice doc:name="Choice" doc:id="718d601d-574d-4e98-925a-218bb3011970" >
+			<when expression="#[vars.found != 'NOT_FOUND']">
+				<os:store doc:name="Store" doc:id="3b4e80d5-f43b-43f0-96db-73aa626b8ece" objectStore="Object_store" key='#[vars.userName ++ ":" ++ vars.id]'/>
+			</when>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="d1b93298-81e4-4d87-89cc-6372dc96cbad">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="4fb99453-463d-4249-9bc1-7cc69c876235" >
+				<set-variable value="#[500]" doc:name="Set Variable" doc:id="4fe5d6ae-6cf4-4e1a-a50a-0f18c3333f70" variableName="httpStatus"/>
+				<ee:transform doc:name="Transform Message" doc:id="dea73853-840a-4429-b5e1-a8669047f4c8" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+    "detail": "Server error: Something went wrong",
+    "status": 500
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="put:\Groups\(id):application\json:api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:Group"
+  ],
+  id: "4c913b85-9b9b-487f-b4e4-e529318ae751",
+  meta: {
+    resourceType: "Group",
+    location: "/scim/v2/Groups/4c913b85-9b9b-487f-b4e4-e529318ae751"
+  },
+  displayName: "Operations Researcher",
+  members: [
+    {
+      display: "john.lindrik@oktaprise.com",
+      value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+    }, 
+    {
+      display: "jane.doe@oktaprise.com",
+      value: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<flow name="delete:\Groups\(id):api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" message="delete:\Groups\(id):api-config" />
+	</flow>
+	<flow name="delete:\Users\(id):api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:retrieve-all-keys doc:name="Retrieve all keys" doc:id="7aad82de-a612-4016-82ea-7749f9d9453e" objectStore="Object_store"/>
+		<ee:transform doc:name="Transform Message" doc:id="182fc994-e480-4ec5-ad48-7f6280e8909a">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+				<ee:set-variable variableName="key" ><![CDATA[%dw 2.0
+output application/java
+---
+flatten(payload filter($ endsWith(vars.id)))[0]]]></ee:set-variable>
+			</ee:variables>
+				</ee:transform>
+		<os:remove doc:name="Remove" doc:id="b61527cc-e852-4e8a-b152-974c3d6464c0" key="#[vars.key]" objectStore="Object_store"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a3272ac9-9ccc-4bcd-8e7f-11e9534e61ad" >
+				<set-variable value="#[404]" doc:name="Set Variable" doc:id="85278ab7-d16b-42d4-b726-1ef70bc33390" variableName="htttpStatus"/>
+				<ee:transform doc:name="Transform Message" doc:id="1c3024b1-5737-487d-96c9-8fa69a1bdbc3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+    "detail": "User not found",
+    "status": 404
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="patch:\Users\(id):application\json:api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:retrieve-all-keys doc:name="Retrieve all keys" doc:id="58b0b486-8e72-4908-8c5b-0014a6e87768" objectStore="Object_store" target="allKeys"/>
+		<ee:transform doc:name="Transform Message" doc:id="1e262153-d892-45d0-b55c-30f5894365ab">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="key"><![CDATA[%dw 2.0
+output application/java
+---
+flatten(vars.allKeys filter($ endsWith(vars.id)))[0]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:retrieve doc:name="Retrieve" doc:id="632fbbb1-b020-4381-ab47-498f185d4b63" key="#[vars.key]" target="currentPayload" objectStore="Object_store">
+			<os:default-value ><![CDATA[#['NOT_FOUND']]]></os:default-value>
+		</os:retrieve>
+		<choice doc:name="Choice" doc:id="9be3db24-44a7-49ea-a4cc-70830fa8cf05" >
+			<when expression='#[payload.active != null]'>
+				<ee:transform doc:name="Transform Message" doc:id="adacf0f5-7026-4888-93d6-c9a62d33ae61" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+import * from dw::util::Values
+---
+vars.currentPayload update "active" with payload.active]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression='#[payload.Operations[0].op == "replace"]'>
+				<ee:transform doc:name="Transform Message" doc:id="5ba77816-8b7f-4c41-bc03-c8dc57193905">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import * from dw::util::Values
+---
+vars.currentPayload update "active" with payload.Operations[0].value.active]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+		</choice>
+		<os:store doc:name="Store" doc:id="d5bd1ac4-2aa4-4459-8f69-f8b7481f58b7" key="#[vars.key]" objectStore="Object_store"/>
+	</flow>
+	<flow name="patch:\Groups\(id):application\json:api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:Group"
+  ],
+  id: "4c913b85-9b9b-487f-b4e4-e529318ae751",
+  meta: {
+    resourceType: "Group",
+    location: "/scim/v2/Groups/4c913b85-9b9b-487f-b4e4-e529318ae751"
+  },
+  displayName: "Operations Researcher",
+  members: [
+    {
+      display: "john.lindrik@oktaprise.com",
+      value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+    }, 
+    {
+      display: "jane.doe@oktaprise.com",
+      value: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\Groups:api-config">
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+  ],
+  totalResults: 2,
+  startIndex: 1,
+  itemsPerPage: 100,
+  resources: [
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:Group"
+      ],
+      id: "4c913b85-9b9b-487f-b4e4-e529318ae751",
+      meta: {
+        resourceType: "Group",
+        location: "/scim/v2/Groups/4c913b85-9b9b-487f-b4e4-e529318ae751"
+      },
+      displayName: "Operations Researcher",
+      members: [
+        {
+          display: "john.lindrik@oktaprise.com",
+          value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+        }, 
+        {
+          display: "jane.doe@oktaprise.com",
+          value: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+        }
+      ]
+    }, 
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:Group"
+      ],
+      id: "52329f03-1agd-47er-8a15-edbf53c3ok91",
+      meta: {
+        resourceType: "Group",
+        location: "/scim/v2/Groups/52329f03-1agd-47er-8a15-edbf53c3ok91"
+      },
+      displayName: "Operations Admin",
+      members: [
+        {
+          display: "john.lindrik@oktaprise.com",
+          value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+        }
+      ]
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\ResourceTypes:api-config">
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+  ],
+  startIndex: 1,
+  itemsPerPage: 2,
+  totalResults: 2,
+  Resources: [
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+      ],
+      id: "Group",
+      description: "Group",
+      name: "Group",
+      schema: "urn:ietf:params:scim:schemas:core:2.0:Group",
+      endpoint: "/Groups",
+      meta: {
+        resourceType: "ResourceType",
+        location: "scim/v2/ResourceTypes/Groups"
+      }
+    }, 
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+      ],
+      id: "User",
+      description: "User Account",
+      name: "User",
+      schema: "urn:ietf:params:scim:schemas:core:2.0:User",
+      endpoint: "/Users",
+      schemaExtensions: [
+        {
+          schema: "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+          required: false
+        }, 
+        {
+          schema: "urn:ietf:params:scim:schemas:extension:oktaprise:2.0:User",
+          required: false
+        }
+      ],
+      meta: {
+        resourceType: "ResourceType",
+        location: "scim/v2/ResourceTypes/User"
+      }
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\Schemas:api-config">
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+  ],
+  totalResults: 1,
+  startIndex: 1,
+  itemsPerPage: 100,
+  Resources: [
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:Schema"
+      ],
+      id: "urn:ietf:params:scim:schemas:oktaprise:2.0:Users",
+      description: "Oktaprise parameters.",
+      name: "OktapriseUsers",
+      attributes: [
+        {
+          name: "badge",
+          "type": "string",
+          multiValued: false,
+          description: "Employee Badge",
+          required: true,
+          caseExact: false,
+          mutability: "readWrite",
+          returned: "always",
+          uniqueness: "none"
+        }, 
+        {
+          name: "machine",
+          "type": "string",
+          multiValued: false,
+          description: "Employee Machine",
+          required: true,
+          caseExact: false,
+          mutability: "readWrite",
+          returned: "always",
+          uniqueness: "none"
+        }
+      ],
+      meta: {
+        resourceType: "Schema",
+        location: "/scim/v2/Schemas/urn:ietf:params:scim:schemas:oktaprise:2.0:Users"
+      }
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\ServiceProviderConfig:api-config">
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"
+  ],
+  id: "ServiceProviderConfig",
+  documentationUri: "http://docs.oktaprise.com/oktaprise/rest/rest-endpoints.html",
+  patch: {
+    supported: true
+  },
+  bulk: {
+    supported: false,
+    maxOperations: 0,
+    maxPayloadSize: 0
+  },
+  filter: {
+    supported: true,
+    maxResults: 1000
+  },
+  changePassword: {
+    supported: false
+  },
+  sort: {
+    supported: false
+  },
+  etag: {
+    supported: false
+  },
+  authenticationSchemes: [
+    {
+      name: "HTTP Basic",
+      description: "Authentication scheme using the HTTP Basic Standard",
+      specUri: "http://www.rfc-editor.org/info/rfc2617",
+      documentationUri: "http://example.com/help/httpBasic.html",
+      "type": "httpbasic"
+    }
+  ],
+  meta: {
+    location: "scim/v2/ServiceProviderConfig",
+    resourceType: "ServiceProviderConfig"
+  }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\Users:api-config">
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+  ],
+  totalResults: 2,
+  startIndex: 1,
+  itemsPerPage: 100,
+  resources: [
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:User", 
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User", 
+        "urn:ietf:params:scim:schemas:extension:oktaprise:2.0:User"
+      ],
+      id: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607",
+      active: true,
+      userName: "john.lindrik@oktaprise.com",
+      name: {
+        givenName: "John",
+        familyName: "Lindrik"
+      },
+      emails: [
+        {
+          primary: true,
+          value: "john.lindrik@oktaprise.com",
+          "type": "work"
+        }
+      ],
+      groups: [
+        {
+          display: "Operations Researcher",
+          value: "4c913b85-9b9b-487f-b4e4-e529318ae751"
+        }, 
+        {
+          display: "Operations Admin",
+          value: "52329f03-1agd-47er-8a15-edbf53c3ok91"
+        }
+      ],
+      "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+        employeeNumber: "ABC101",
+        costCenter: "US_IT"
+      },
+      "urn:ietf:params:scim:schemas:extension:oktaprise:2.0:User": {
+        badge: "2",
+        machine: "MAC2"
+      },
+      meta: {
+        resourceType: "User",
+        location: "/scim/v2/Users/ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+      }
+    }, 
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:User", 
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User", 
+        "urn:ietf:params:scim:schemas:extension:oktaprise:2.0:User"
+      ],
+      id: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6",
+      active: true,
+      userName: "jane.doe@oktaprise.com",
+      name: {
+        givenName: "Jane",
+        familyName: "Doe"
+      },
+      emails: [
+        {
+          primary: true,
+          value: "jane.doe@oktaprise.com",
+          "type": "work"
+        }
+      ],
+      groups: [
+        {
+          display: "Operations Researcher",
+          value: "4c913b85-9b9b-487f-b4e4-e529318ae751"
+        }
+      ],
+      "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+        employeeNumber: "ABC102",
+        costCenter: "US_RD"
+      },
+      "urn:ietf:params:scim:schemas:extension:oktaprise:2.0:User": {
+        badge: "1",
+        machine: "MAC1"
+      },
+      meta: {
+        resourceType: "User",
+        location: "/scim/v2/Users/d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+      }
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="init-get-user-subflow"
+			doc:id="aa4602bd-9cd0-4d3e-82ae-0cc5fc8105c1"
+			name="init-get-user-subflow" />
+		<os:retrieve-all-keys
+			doc:name="Retrieve all keys"
+			doc:id="90f68a38-ae11-4ecb-b63f-0ad61a77b046"
+			objectStore="Object_store" />
+		<choice doc:name="Choice" doc:id="e4a3ebd9-8cfb-4f95-b9a6-6eedc1ac9a44" >
+			<when expression='#[vars.userName !=  null and vars.userName != ""]'>
+				<ee:transform doc:name="Transform Message" doc:id="27274d99-7911-4828-9b8c-4f7d5a41f3d7">
+			<ee:message>
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+flatten(payload filter($ startsWith(vars.userName)))]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+			</ee:variables>
+		</ee:transform>
+			</when>
+		</choice>
+		<set-variable value="#[sizeOf(payload)]" doc:name="Set totalResults"
+			doc:id="cbca48f4-06b3-490c-b354-1e46a278aaa9"
+			variableName="totalResults" />
+		<foreach doc:name="For Each"
+			doc:id="12342d2d-17c7-4b2d-bce5-0bf1bcf8c894" collection="#[payload]">
+			<choice doc:name="Choice"
+				doc:id="0994f920-8e7a-4af4-8e8e-03ca03fe46b6">
+				<when
+					expression="#[vars.counter &gt;= vars.offset and vars.counter &lt; (vars.offset + vars.count)]">
+					<os:retrieve doc:name="Retrieve" doc:id="190046a6-5029-4db5-810e-a9e6bfb6eaa0" key="#[payload]" objectStore="Object_store"/>
+					<ee:transform doc:name="Transform Message" doc:id="3affc167-5ce8-4437-9f21-bf90bf45c260" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="result" ><![CDATA[%dw 2.0
+output application/java
+---
+(vars.result default []) ++ [payload]]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+			</choice>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="37315708-6f2b-4166-91fc-d474f1b34c4a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+  ],
+  totalResults: vars.totalResults,
+  startIndex: vars.startIndex,
+  itemsPerPage: sizeOf(vars.result default []),
+  Resources: (vars.result default [])
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="73091422-c308-403f-87c1-8cd615caac7e" >
+				<set-variable value="#[404]" doc:name="Set Variable" doc:id="db58ed37-613b-4a46-8c66-c7a79af89764" variableName="httpStatus" />
+				<ee:transform doc:name="Transform Message" doc:id="324c899c-8aac-4b7d-a474-121e048ca43c" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output text/json
+---
+{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+    "detail": "User not found",
+    "status": 404
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="get:\Users\(id):api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:retrieve-all-keys
+			doc:name="Retrieve all keys"
+			doc:id="9e547dcd-37a7-4881-945e-9d607ecbb36e" objectStore="Object_store"/>
+		<ee:transform doc:name="Transform Message" doc:id="eb71716d-27ea-4217-9478-ea1fd4255c07" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="Key" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload filter($ endsWith(vars.id)))[0]
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:retrieve doc:name="Retrieve" doc:id="dd490d42-787c-4337-bb35-393a2d2bebee" key="#[vars.key]" objectStore="Object_store" />
+		<ee:transform doc:name="Transform Message" doc:id="e9cfdba9-842b-426c-bae1-af3d9351aa30">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="38d81650-ee7b-4997-af47-c1ee0f4a0336" type="ANY">
+					<set-variable value="#[404]" doc:name="Set Variable" doc:id="8506a33a-8588-4d79-ab4b-c9a01b7dd045" variableName="httpStatus" />
+					<ee:transform doc:name="Transform Message" doc:id="1548f172-d34a-4845-a235-219ed259ea4f">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+    "detail": "User not found",
+    "status": 404
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+		</error-handler>
+    </flow>
+    <flow name="get:\Groups\(id):api-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:Group"
+  ],
+  id: "4c913b85-9b9b-487f-b4e4-e529318ae751",
+  meta: {
+    resourceType: "Group",
+    location: "/scim/v2/Groups/4c913b85-9b9b-487f-b4e4-e529318ae751"
+  },
+  displayName: "Operations Researcher",
+  members: [
+    {
+      display: "john.lindrik@oktaprise.com",
+      value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+    }, 
+    {
+      display: "jane.doe@oktaprise.com",
+      value: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+    }
+  ]
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\Users:application\json:api-config">
+		<ee:transform doc:name="Transform Message" doc:id="cb03d6be-237f-48ff-9255-fbcc458ef11c">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="hash"><![CDATA[%dw 2.0
+output application/java
+import dw::Crypto
+var data = write(payload, "application/json")
+---
+Crypto::SHA1(data as Binary)
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+<ee:transform doc:name="Transform Message" doc:id="2a635492-302e-423a-a941-2b0fd8652721">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="key"><![CDATA[%dw 2.0
+output application/java
+---
+payload.userName ++ ":" ++ vars.hash]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="8c168537-8f2d-4297-8bd2-6922e9f9067f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload ++ {
+	"id": vars.hash
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<try doc:name="Try" doc:id="18eecb6f-653c-4bee-8446-9deaeab7c472">
+			<os:store doc:name="Save the user" doc:id="dd56cacc-2ad2-460b-9fd8-fb919f839209" key="#[vars.key]" objectStore="Object_store" failIfPresent="true" />
+		</try>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="0307bfe6-d4ae-48e5-bb4b-6971641d2d8b" type="OS:KEY_ALREADY_EXISTS">
+					<set-variable value="#[409]" doc:name="Set Variable" doc:id="e63ca16e-b437-4fed-976d-f570f91233de" variableName="httpStatus" />
+					<ee:transform doc:name="Transform Message" doc:id="15c9a563-16b6-462c-9610-9a1872650f0f">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+    "detail": "User already exists in the database.",
+    "status": 409
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+		</error-handler>
+    </flow>
+	<flow name="post:\Groups:application\json:api-config">
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:Group"
+  ],
+  id: "4c913b85-9b9b-487f-b4e4-e529318ae751",
+  meta: {
+    resourceType: "Group",
+    location: "/scim/v2/Groups/4c913b85-9b9b-487f-b4e4-e529318ae751"
+  },
+  displayName: "Operations Researcher",
+  members: [
+    {
+      display: "john.lindrik@oktaprise.com",
+      value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+    }, 
+    {
+      display: "jane.doe@oktaprise.com",
+      value: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+    }
+  ]
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+</mule>

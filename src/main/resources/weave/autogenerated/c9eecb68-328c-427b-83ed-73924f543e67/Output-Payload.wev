@@ -1,0 +1,39 @@
+%dw 2.0
+
+type auto_c9eecb68_328c_427b_83ed_73924f543e67_Output_Payload = {
+  totalResults: Number, 
+  startIndex: Number, 
+  itemsPerPage: Number, 
+  schemas: Array<String> {"description": "The list of schemas"}, 
+  resources: Array<{    emails: Array<{      "type": String,       value: String,       primary: Boolean,       _?: Any    } {"description": "The user email"}> {"description": "The list of emails"}, 
+    meta: {
+      location: String, 
+      resourceType: String, 
+      _?: Any
+    } {"description": "User metadata"}, 
+    schemas: Array<String> {"description": "The list of schemas"}, 
+    name: {
+      familyName: String, 
+      givenName: String, 
+      middleName?: String, 
+      _?: Any
+    } {"description": "The user's full name"}, 
+    active: Boolean, 
+    groups: Array<{      display: String,       value: String,       _?: Any    } {"description": "The user groups"}> {"description": "List of user groups"}, 
+    id: String, 
+    userName: String, 
+    "urn:ietf:params:scim:schemas:extension:oktaprise:2.0:User": {
+      badge: String, 
+      machine: String, 
+      _?: Any
+    } {"description": "Custom attributes from Oktaprise"}, 
+    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+      costCenter: String, 
+      employeeNumber: String, 
+      _?: Any
+    } {"description": "Custom enterprise attributes from SCIM"}, 
+    _?: Any
+  } {"description": "User entry"}> {"description": "The list of users"}, 
+  _?: Any
+} {"description": "Class describing a collection of users"}
+
