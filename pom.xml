@@ -1,34 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
-	<groupId>com.mycompany</groupId>
-	<artifactId>scim</artifactId>
+	<parent>
+		<groupId>75dbd05f-1b06-4cf7-b3be-b8bfbc18afc9</groupId>
+		<artifactId>api-parent-pom</artifactId>
+		<version>1.0.0</version>
+	</parent>
+	<groupId>75dbd05f-1b06-4cf7-b3be-b8bfbc18afc9</groupId>
+	<artifactId>bel-all-gbl-ofcf-scim-sys-v1</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>mule-application</packaging>
-
 	<name>bel-all-gbl-ofcf-scim-sys-v1</name>
+	<description>.</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-		<app.runtime>4.4.0-20220824</app.runtime>
+		<api.layer>${api.layer.exp}</api.layer>
+		<!-- <api.layer>${api.layer.prc}</api.layer> -->
+		<!-- <api.layer>${api.layer.sys}</api.layer> -->
+		<cloudhub.businessGroupId>${CH_BGID}</cloudhub.businessGroupId>
+		<mule-maven-plugin.version>3.8.2</mule-maven-plugin.version>
 		<mule.maven.plugin.version>3.8.2</mule.maven.plugin.version>
+		<VALIDATION_REPORT_DIR>target/validationReport</VALIDATION_REPORT_DIR>
+		<VALIDATION_REPORT_FILE_NAME>report.html</VALIDATION_REPORT_FILE_NAME>
+		<RULE_FILE_LOC>src/test/resources</RULE_FILE_LOC>
+		<RULE_FILE_NAME>app-rule.json</RULE_FILE_NAME>
+		<APP_TYPE>HTTP</APP_TYPE>
+		<app.runtime>4.4.0-20220824</app.runtime>
 	</properties>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>${basedir}/src/main/resources/</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>3.0.0</version>
-			</plugin>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
-				<version>${mule.maven.plugin.version}</version>
+				<version>${mule-maven-plugin.version}</version>
 				<extensions>true</extensions>
+			</plugin>
+			<plugin>
+				<groupId>org.neointegration</groupId>
+				<artifactId>validate-mule-maven-plugin</artifactId>
+				<version>1.0.3</version>
+				<configuration>
+					<appType>${APP_TYPE}</appType>
+					<ruleFileLoc>${RULE_FILE_LOC}</ruleFileLoc>
+					<ruleFileName>${RULE_FILE_NAME}</ruleFileName>
+					<reportPath>${VALIDATION_REPORT_DIR}</reportPath>
+					<reportFileName>${VALIDATION_REPORT_FILE_NAME}</reportFileName>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -58,13 +87,42 @@
 			<version>1.2.1</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
+
+		<dependency>
+			<groupId>com.mulesoft.modules</groupId>
+			<artifactId>mule-secure-configuration-property-module</artifactId>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+
+		<dependency>
+			<groupId>com.mule.modules</groupId>
+			<artifactId>mule-custom-metrics-extension</artifactId>
+			<version>2.2.0</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+
+
+		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-runner</artifactId>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-tools</artifactId>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+
+
 	</dependencies>
 
 	<repositories>
 		<repository>
-			<id>anypoint-exchange-v3</id>
+			<id>anypoint-exchange</id>
 			<name>Anypoint Exchange</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+			<url>https://maven.anypoint.mulesoft.com/api/v2/maven</url>
 			<layout>default</layout>
 		</repository>
 		<repository>
@@ -73,17 +131,22 @@
 			<url>https://repository.mulesoft.org/releases/</url>
 			<layout>default</layout>
 		</repository>
+		<repository>
+			<id>anypoint-exchange-v3</id>
+			<name>Anypoint Exchange V3</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+			<layout>default</layout>
+		</repository>
 	</repositories>
-
 	<pluginRepositories>
 		<pluginRepository>
-			<id>mulesoft-releases</id>
-			<name>MuleSoft Releases Repository</name>
-			<layout>default</layout>
-			<url>https://repository.mulesoft.org/releases/</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
+			<id>Central</id>
+			<url>https://repo1.maven.org/maven2/</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>neo-integrations-public</id>
+			<name>Neo Integrations Public Maven Repo</name>
+			<url>https://pkgs.dev.azure.com/NeoIntegration/NeoIntegrations/_packaging/maven-public/maven/v1</url>
 		</pluginRepository>
 	</pluginRepositories>
 

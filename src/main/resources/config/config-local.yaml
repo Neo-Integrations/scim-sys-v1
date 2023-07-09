@@ -1,0 +1,9 @@
+api:
+  id: "18812305"
+  
+
+target:
+  host: "dev.eu.api-int.belron.com"
+  port: "443"
+  path: "/gbl/ofcf-scim-sys/v1"
+  

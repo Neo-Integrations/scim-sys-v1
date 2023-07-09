@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation=" http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+	http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+	http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+	http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+	http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+	http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<global-property doc:name="Global Property"
+		doc:id="bf869fb0-22fc-42b4-9742-c39e2cf4ac81" name="mule.env"
+		value="local" />
+	<global-property doc:name="Global Property"
+		doc:id="42a203e1-b8ce-4fd9-b286-8651c74411bc" name="mule.key"
+		value="01234567890123456789" />
+	<configuration-properties
+		doc:name="Env specific properties"
+		doc:id="d71abc5b-ffb8-4274-a664-e9439f9acd04"
+		file="config/config-${mule.env}.yaml" />
+	<apikit:config name="api-router_belron" api="api.raml"
+		outboundHeadersMapName="outboundHeaders"
+		httpStatusVarName="httpStatus" />
+		
+		
+	<http:listener-config
+		name="api-httpListenerConfig" doc:name="api-httpListenerConfig">
+		<http:listener-connection host="0.0.0.0"
+			port="${http.private.port}" />
+	</http:listener-config>
+	<secure-properties:config
+		name="Secure_Properties_Config" doc:name="Secure Properties Config"
+		doc:id="632ad8ed-0182-4012-a37e-27467166a081"
+		file="config\config-secure-${mule.env}.yaml" key="${mule.key}">
+	</secure-properties:config>
+	<api-gateway:autodiscovery apiId="${api.id}"
+		ignoreBasePath="true" doc:name="API Autodiscovery"
+		doc:id="d79a8d4e-1681-4db6-ae21-20f33593117a" flowRef="api-main" />
+	<configuration-properties
+		doc:name="Configuration properties"
+		doc:id="86206bf5-e9c4-4a62-8145-194eed7c403e"
+		file="config/config.yaml" />
+
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="12a34dab-aefb-4367-9651-984f44de47d4" maxEntries="5000" />
+</mule>

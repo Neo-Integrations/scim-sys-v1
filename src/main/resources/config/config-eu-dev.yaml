@@ -1,0 +1,9 @@
+api:
+  id: "18812305"
+  
+
+target:
+  host: "oracle.com"
+  port: "443"
+  path: "/hcmRestApi/resources/11.13.18.05"
+  

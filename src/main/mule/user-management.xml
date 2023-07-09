@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+	http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+
+
+
+	<sub-flow name="init-get-user-subflow"
+		doc:id="8580e0f0-5bd2-4550-90fd-3fa8e1864efe">
+		<set-variable value="#[attributes.queryParams.filter]"
+			doc:name="Set filter" doc:id="9df02234-bf27-43a0-9819-a72e5469c553"
+			variableName="filter" />
+		<ee:transform doc:name="Transform Message"
+			doc:id="678b84d3-165e-43a1-93d7-0e721a38005b">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="userName"><![CDATA[%dw 2.0
+output application/java
+
+var filterNotNull = (attributes.queryParams.filter default "")
+var emailAddress = if(sizeOf(filterNotNull splitBy("eq")) > 1) (filterNotNull splitBy("eq"))[1] else ""
+---
+trim(emailAddress replace '"' with "")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable
+			value="#[if(attributes.queryParams.startIndex == null or attributes.queryParams.startIndex &lt;= 0) 1 else attributes.queryParams.startIndex]"
+			doc:name="Set startIndex"
+			doc:id="e31cda60-38a2-4f6f-93c8-cecf35968104"
+			variableName="startIndex" />
+		<set-variable
+			value="#[(attributes.queryParams.count default 10)]"
+			doc:name="Set Count" doc:id="bf31c7d8-bd4b-497f-874a-dd1163626ea1"
+			variableName="count" />
+		<set-variable
+			value="#[(vars.startIndex - 1) * vars.count + 1]"
+			doc:name="Set Variable" doc:id="63402499-9ffb-4b58-a080-00d8ecedcc47"
+			variableName="offset" />
+	</sub-flow>
+
+	<flow name="update-user-flow">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[payload.userName]"
+			doc:name="Set Username" doc:id="3f7ef5f5-6868-486a-96fa-3bb771138875"
+			variableName="userName" />
+		<os:retrieve doc:name="Retrieve"
+			doc:id="34917841-9aaf-47e1-90c3-bce421c63fc2"
+			key='#[vars.userName ++ ":" ++ vars.id]' objectStore="Object_store"
+			target="found">
+			<os:default-value><![CDATA[#['NOT_FOUND']]]></os:default-value>
+		</os:retrieve>
+		<choice doc:name="Choice"
+			doc:id="d59d1f9d-28b0-4296-8f40-9268b486fb84">
+			<when expression="#[vars.found != 'NOT_FOUND']">
+				<os:store doc:name="Store"
+					doc:id="8b9e3d80-28ef-416c-8996-921a275fe1be"
+					objectStore="Object_store" key='#[vars.userName ++ ":" ++ vars.id]' />
+			</when>
+		</choice>
+		<ee:transform doc:name="Transform Message"
+			doc:id="3fd977bc-4e18-4a65-bd6f-447a89a22d47">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler>
+			<on-error-continue enableNotifications="true"
+				logException="true" doc:name="On Error Continue"
+				doc:id="bb0a38c4-3838-436d-8819-5246e8da442a">
+				<set-variable value="#[500]" doc:name="Set Variable"
+					doc:id="5730a661-8447-4f2e-b227-c7082cb89780"
+					variableName="httpStatus" />
+				<ee:transform doc:name="Transform Message"
+					doc:id="70bb4f29-b0bf-48e9-a337-d243a117ef75">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+    "detail": "Server error: Something went wrong",
+    "status": 500
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+
+	<flow name="delete-user-flow"
+		doc:id="b6a00016-b32b-4f57-b00b-e37a9fa3d1dd">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:retrieve-all-keys
+			doc:name="Retrieve all keys"
+			doc:id="f93c244d-c9e8-4df0-a244-60b24b3d3761"
+			objectStore="Object_store" />
+		<ee:transform doc:name="Transform Message"
+			doc:id="5c678aa0-3ba3-4e26-a7f7-59ec3fc6287b">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="key"><![CDATA[%dw 2.0
+output application/java
+---
+flatten(payload filter($ endsWith(vars.id)))[0]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:remove doc:name="Remove"
+			doc:id="bda33715-06cc-4400-a053-7197de0b31eb" key="#[vars.key]"
+			objectStore="Object_store" />
+		<error-handler>
+			<on-error-continue enableNotifications="true"
+				logException="true" doc:name="On Error Continue"
+				doc:id="285d27c4-024b-4bc9-a9fe-85591d2d33a6">
+				<set-variable value="#[404]" doc:name="Set Variable"
+					doc:id="89bac871-ae6f-45b5-b498-f353d4b4c3ad"
+					variableName="htttpStatus" />
+				<ee:transform doc:name="Transform Message"
+					doc:id="94220922-73ca-422e-aaee-a2f742f4ef37">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+    "detail": "User not found",
+    "status": 404
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+
+	<flow name="deactivate-user-flow">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:retrieve-all-keys
+			doc:name="Retrieve all keys"
+			doc:id="7d31ec06-b161-49fe-97ee-c32430ecc794"
+			objectStore="Object_store" target="allKeys" />
+		<ee:transform doc:name="Transform Message"
+			doc:id="e0cc3f0e-10b7-47cd-b45d-4406941f8113">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="key"><![CDATA[%dw 2.0
+output application/java
+---
+flatten(vars.allKeys filter($ endsWith(vars.id)))[0]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:retrieve doc:name="Retrieve"
+			doc:id="85373103-d2e0-4b48-ad10-0ace659b9eff" key="#[vars.key]"
+			target="currentPayload" objectStore="Object_store">
+			<os:default-value><![CDATA[#['NOT_FOUND']]]></os:default-value>
+		</os:retrieve>
+		<choice doc:name="Choice"
+			doc:id="8b8b0304-04fd-43e6-8f6f-60f4960ea505">
+			<when expression='#[payload.active != null]'>
+				<ee:transform doc:name="Transform Message"
+					doc:id="35579b61-a6b9-4d12-9a2d-abfd79bdabb4">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import * from dw::util::Values
+---
+vars.currentPayload update "active" with payload.active]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression='#[payload.Operations[0].op == "replace"]'>
+				<ee:transform doc:name="Transform Message"
+					doc:id="d3028e8d-1c77-4335-9c51-d7908ffb6d31">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+import * from dw::util::Values
+---
+vars.currentPayload update "active" with payload.Operations[0].value.active]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+		</choice>
+		<os:store doc:name="Store"
+			doc:id="f48d9165-34a3-4c78-b10e-be7d6e0a9f53" key="#[vars.key]"
+			objectStore="Object_store" />
+	</flow>
+	<flow name="read-user-details-flow">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:retrieve-all-keys
+			doc:name="Retrieve all keys"
+			doc:id="289c5793-0429-487f-a1ed-84561d78bb60" objectStore="Object_store"/>
+		<ee:transform doc:name="Transform Message" doc:id="5d9fcf83-18e3-4c91-b3d2-2d18df35d155" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="Key" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload filter($ endsWith(vars.id)))[0]
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:retrieve doc:name="Retrieve" doc:id="b80c776c-a259-47a3-836a-f2ae35393ae3" key="#[vars.key]" objectStore="Object_store" />
+		<ee:transform doc:name="Transform Message" doc:id="bd2bcf77-b663-46ba-b1b0-add5bdd74df8">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="310bdc1d-8166-46a7-8c6e-f54792c715b0" type="ANY">
+					<set-variable value="#[404]" doc:name="Set Variable" doc:id="9342f55b-bc88-47b7-a566-1baf3bee68ee" variableName="httpStatus" />
+					<ee:transform doc:name="Transform Message" doc:id="490a33ea-92ab-4575-9d2d-5f38358f80f3">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+    "detail": "User not found",
+    "status": 404
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+		</error-handler>
+    </flow>
+	<flow name="serach-user-flow"
+	doc:id="1f780502-63a9-4fea-8bfe-aefc9940329c">
+			<flow-ref doc:name="init-get-user-subflow"
+			doc:id="a0bb2e1e-9e1b-4013-853c-c6529e22c021"
+			name="init-get-user-subflow" />
+		<os:retrieve-all-keys
+			doc:name="Retrieve all keys"
+			doc:id="30d64a4d-8fde-4010-9f5b-210dc7bc6a85"
+			objectStore="Object_store" />
+		<choice doc:name="Choice" doc:id="87061307-104b-4273-8375-8a97b97f16e1" >
+			<when expression='#[vars.userName !=  null and vars.userName != ""]'>
+				<ee:transform doc:name="Transform Message" doc:id="88cf9f5d-48fe-493f-a636-32a4512ae557">
+			<ee:message>
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+flatten(payload filter($ startsWith(vars.userName)))]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+			</ee:variables>
+		</ee:transform>
+			</when>
+		</choice>
+		<set-variable value="#[sizeOf(payload)]" doc:name="Set totalResults"
+			doc:id="6f7fd860-601f-4cd4-87d2-6ea753f4f3c6"
+			variableName="totalResults" />
+		<foreach doc:name="For Each"
+			doc:id="fbf5d45a-f0f1-4ea0-b1be-5ba63e002212" collection="#[payload]">
+			<choice doc:name="Choice"
+				doc:id="59f2662b-72c2-41f7-8877-344c9c09900a">
+				<when
+					expression="#[vars.counter &gt;= vars.offset and vars.counter &lt; (vars.offset + vars.count)]">
+					<os:retrieve doc:name="Retrieve" doc:id="0b9610fe-5135-4f46-bed7-43d17ee9243f" key="#[payload]" objectStore="Object_store"/>
+					<ee:transform doc:name="Transform Message" doc:id="92987eca-9ee7-4ee0-b64b-7346cc26bbd2" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="result" ><![CDATA[%dw 2.0
+output application/java
+---
+(vars.result default []) ++ [payload]]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+			</choice>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="2ac86210-4a28-4c07-92d0-865506dd9c4a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+  ],
+  totalResults: vars.totalResults,
+  startIndex: vars.startIndex,
+  itemsPerPage: sizeOf(vars.result default []),
+  Resources: (vars.result default [])
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2dcc45af-0037-4bc2-bac5-6360520c2c01" >
+				<set-variable value="#[404]" doc:name="Set Variable" doc:id="1abe721b-d653-4d9d-86bb-de1f6e5238cd" variableName="httpStatus" />
+				<ee:transform doc:name="Transform Message" doc:id="a6cfa109-3ddf-4194-9e79-c02e96b45127" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output text/json
+---
+{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+    "detail": "User not found",
+    "status": 404
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="create-user-flow" doc:id="2bf37614-e714-4540-9259-3fcc38cb3e3f" >
+			<ee:transform doc:name="Transform Message" doc:id="ca9dc357-f984-4fd6-89c5-167ae4535f59">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="hash"><![CDATA[%dw 2.0
+output application/java
+import dw::Crypto
+var data = write(payload, "application/json")
+---
+Crypto::SHA1(data as Binary)
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+<ee:transform doc:name="Transform Message" doc:id="a524c771-21fe-40b5-a21a-5b80bfd2c231">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="key"><![CDATA[%dw 2.0
+output application/java
+---
+(payload.userName default "") ++ ":" ++ (vars.hash default "")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="f3522ef8-93fe-40e0-968c-71970e8a5812">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload ++ {
+	"id": vars.hash
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<try doc:name="Try" doc:id="3fb9fc23-1b19-42fb-a223-eb26d045cc5b">
+			<os:store doc:name="Save the user" doc:id="5976780a-136a-4507-9c7a-807fc9dbe588" key="#[vars.key]" objectStore="Object_store" failIfPresent="true" />
+		</try>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c5bb901e-7962-4f26-8f6a-54d9c9273726" type="OS:KEY_ALREADY_EXISTS">
+					<set-variable value="#[409]" doc:name="Set Variable" doc:id="17157c08-5143-48c6-a3b5-cef5e862b3b8" variableName="httpStatus" />
+					<ee:transform doc:name="Transform Message" doc:id="f4fada38-bca7-4cca-be0c-c797ce7bd031">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+    "detail": "User already exists in the database.",
+    "status": 409
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+		</error-handler>
+	</flow>
+	
+	
+</mule>

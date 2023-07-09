@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+	http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+
+	<flow name="api-main">
+		<http:listener config-ref="api-httpListenerConfig"
+			path="/api/*">
+			<http:response
+				statusCode="#[vars.httpStatus default 200]">
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:response>
+			<http:error-response
+				statusCode="#[vars.httpStatus default 500]">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:error-response>
+		</http:listener>
+		<flow-ref doc:name="init-subflow" doc:id="7ba22b31-0cb3-43ef-9b1f-169527d356ba" name="init-subflow" />
+		<flow-ref doc:name="custom-metrics-init-vars-subflow" doc:id="691f6e96-ce4f-4d9d-bc8c-4b36d1e95285" name="custom-metrics-init-vars-subflow"/>
+		<apikit:router config-ref="api-router_belron" />
+		<flow-ref
+			doc:name="send-application-processing-status-metrics-subflow"
+			doc:id="33a9f341-3ee8-4bf2-92a4-7d005135886d"
+			name="send-application-processing-status-metrics-subflow" />
+		<error-handler ref="globalErrorHandler" />
+	</flow>
+	<flow name="put:\Users\(id):application\scim+json:api-config">
+		<flow-ref doc:name="update-user-flow"
+			doc:id="b04c6063-be7c-473e-bab0-3ae0a0667270" name="update-user-flow" />
+	</flow>
+	<flow name="put:\Groups\(id):application\scim+json:api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:Group"
+  ],
+  id: "4c913b85-9b9b-487f-b4e4-e529318ae751",
+  meta: {
+    resourceType: "Group",
+    location: "/scim/v2/Groups/4c913b85-9b9b-487f-b4e4-e529318ae751"
+  },
+  displayName: "Operations Researcher",
+  members: [
+    {
+      display: "john.lindrik@oktaprise.com",
+      value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+    }, 
+    {
+      display: "jane.doe@oktaprise.com",
+      value: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<flow name="delete:\Groups\(id):api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" message="delete:\Groups\(id):api-config" />
+	</flow>
+	<flow name="delete:\Users\(id):api-config">
+		<flow-ref doc:name="delete-user-flow"
+			doc:id="dd6f286f-e4cb-4f79-85d7-3f758d12d740" name="delete-user-flow" />
+	</flow>
+	<flow name="patch:\Users\(id):application\scim+json:api-config">
+		<flow-ref doc:name="deactivate-user-flow"
+			name="deactivate-user-flow" />
+	</flow>
+	<flow name="patch:\Groups\(id):application\scim+json:api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:Group"
+  ],
+  id: "4c913b85-9b9b-487f-b4e4-e529318ae751",
+  meta: {
+    resourceType: "Group",
+    location: "/scim/v2/Groups/4c913b85-9b9b-487f-b4e4-e529318ae751"
+  },
+  displayName: "Operations Researcher",
+  members: [
+    {
+      display: "john.lindrik@oktaprise.com",
+      value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+    }, 
+    {
+      display: "jane.doe@oktaprise.com",
+      value: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\Groups:api-config">
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+  ],
+  totalResults: 2,
+  startIndex: 1,
+  itemsPerPage: 100,
+  resources: [
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:Group"
+      ],
+      id: "4c913b85-9b9b-487f-b4e4-e529318ae751",
+      meta: {
+        resourceType: "Group",
+        location: "/scim/v2/Groups/4c913b85-9b9b-487f-b4e4-e529318ae751"
+      },
+      displayName: "Operations Researcher",
+      members: [
+        {
+          display: "john.lindrik@oktaprise.com",
+          value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+        }, 
+        {
+          display: "jane.doe@oktaprise.com",
+          value: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+        }
+      ]
+    }, 
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:Group"
+      ],
+      id: "52329f03-1agd-47er-8a15-edbf53c3ok91",
+      meta: {
+        resourceType: "Group",
+        location: "/scim/v2/Groups/52329f03-1agd-47er-8a15-edbf53c3ok91"
+      },
+      displayName: "Operations Admin",
+      members: [
+        {
+          display: "john.lindrik@oktaprise.com",
+          value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+        }
+      ]
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\ResourceTypes:api-config">
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+  ],
+  startIndex: 1,
+  itemsPerPage: 2,
+  totalResults: 2,
+  Resources: [
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+      ],
+      id: "Group",
+      description: "Group",
+      name: "Group",
+      schema: "urn:ietf:params:scim:schemas:core:2.0:Group",
+      endpoint: "/Groups",
+      meta: {
+        resourceType: "ResourceType",
+        location: "scim/v2/ResourceTypes/Groups"
+      }
+    }, 
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+      ],
+      id: "User",
+      description: "User Account",
+      name: "User",
+      schema: "urn:ietf:params:scim:schemas:core:2.0:User",
+      endpoint: "/Users",
+      schemaExtensions: [
+        {
+          schema: "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+          required: false
+        }, 
+        {
+          schema: "urn:ietf:params:scim:schemas:extension:oktaprise:2.0:User",
+          required: false
+        }
+      ],
+      meta: {
+        resourceType: "ResourceType",
+        location: "scim/v2/ResourceTypes/User"
+      }
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\Schemas:api-config">
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+  ],
+  totalResults: 1,
+  startIndex: 1,
+  itemsPerPage: 100,
+  Resources: [
+    {
+      schemas: [
+        "urn:ietf:params:scim:schemas:core:2.0:Schema"
+      ],
+      id: "urn:ietf:params:scim:schemas:oktaprise:2.0:Users",
+      description: "Oktaprise parameters.",
+      name: "OktapriseUsers",
+      attributes: [
+        {
+          name: "badge",
+          "type": "string",
+          multiValued: false,
+          description: "Employee Badge",
+          required: true,
+          caseExact: false,
+          mutability: "readWrite",
+          returned: "always",
+          uniqueness: "none"
+        }, 
+        {
+          name: "machine",
+          "type": "string",
+          multiValued: false,
+          description: "Employee Machine",
+          required: true,
+          caseExact: false,
+          mutability: "readWrite",
+          returned: "always",
+          uniqueness: "none"
+        }
+      ],
+      meta: {
+        resourceType: "Schema",
+        location: "/scim/v2/Schemas/urn:ietf:params:scim:schemas:oktaprise:2.0:Users"
+      }
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\ServiceProviderConfig:api-config">
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"
+  ],
+  id: "ServiceProviderConfig",
+  documentationUri: "http://docs.oktaprise.com/oktaprise/rest/rest-endpoints.html",
+  patch: {
+    supported: true
+  },
+  bulk: {
+    supported: false,
+    maxOperations: 0,
+    maxPayloadSize: 0
+  },
+  filter: {
+    supported: true,
+    maxResults: 1000
+  },
+  changePassword: {
+    supported: false
+  },
+  sort: {
+    supported: false
+  },
+  etag: {
+    supported: false
+  },
+  authenticationSchemes: [
+    {
+      name: "HTTP Basic",
+      description: "Authentication scheme using the HTTP Basic Standard",
+      specUri: "http://www.rfc-editor.org/info/rfc2617",
+      documentationUri: "http://example.com/help/httpBasic.html",
+      "type": "httpbasic"
+    }
+  ],
+  meta: {
+    location: "scim/v2/ServiceProviderConfig",
+    resourceType: "ServiceProviderConfig"
+  }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\Users:api-config">
+		<flow-ref doc:name="serach-user-flow"
+			doc:id="13750403-487b-40dc-bd01-738d06a32ef4" name="serach-user-flow" />
+	</flow>
+	<flow name="get:\Users\(id):api-config">
+		<flow-ref name="read-user-details-flow"
+			doc:name="read-user-details-flow" />
+	</flow>
+	<flow name="get:\Groups\(id):api-config">
+		<ee:transform>
+			<ee:variables>
+				<ee:set-variable variableName="id">attributes.uriParams.'id'
+				</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:Group"
+  ],
+  id: "4c913b85-9b9b-487f-b4e4-e529318ae751",
+  meta: {
+    resourceType: "Group",
+    location: "/scim/v2/Groups/4c913b85-9b9b-487f-b4e4-e529318ae751"
+  },
+  displayName: "Operations Researcher",
+  members: [
+    {
+      display: "john.lindrik@oktaprise.com",
+      value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+    }, 
+    {
+      display: "jane.doe@oktaprise.com",
+      value: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="post:\Users:application\scim+json:api-config">
+		<flow-ref doc:name='create-user-flow'
+			doc:id="ea9bcdb1-428b-4392-8775-131f73748202" name="create-user-flow" />
+	</flow>
+	<flow name="post:\Groups:application\scim+json:api-config">
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:Group"
+  ],
+  id: "4c913b85-9b9b-487f-b4e4-e529318ae751",
+  meta: {
+    resourceType: "Group",
+    location: "/scim/v2/Groups/4c913b85-9b9b-487f-b4e4-e529318ae751"
+  },
+  displayName: "Operations Researcher",
+  members: [
+    {
+      display: "john.lindrik@oktaprise.com",
+      value: "ce58fe63-2eaa-45e7-97da-5bbdf87ce607"
+    }, 
+    {
+      display: "jane.doe@oktaprise.com",
+      value: "d0e07f41-e8bf-43e5-b70c-a4cdde92ddc6"
+    }
+  ]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

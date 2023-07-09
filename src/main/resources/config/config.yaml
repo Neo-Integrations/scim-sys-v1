@@ -1,0 +1,13 @@
+http:
+  private:
+    port: "8091"
+
+app:
+  name: "${project.artifactId}"
+  context: "gbl"
+  version: "v1"
+  layer: "exp" # Possible values are : "exp", "prc" and "sys"
+  type: "HTTP" # Possible values are: 
+               #    HTTP: For standard API where everything startes with an HTTP Listener
+               #    MQ: Set this value for any mule application which listening to any message broker using Mule connector (Anypoint MQ, JMS, AMQP, SQS, SNS, Salesforce Platform Events etc)
+               #    FILE: Set to this value when the processing startes with a file using any of the file based connector (File, SFTP, FTPS, FTP etc)

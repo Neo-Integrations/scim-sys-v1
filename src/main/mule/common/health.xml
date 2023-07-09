@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<flow name="api-alive-flow">
+		<http:listener config-ref="api-httpListenerConfig" path="/alive">
+		<http:response statusCode="200" /> <http:error-response statusCode="500">
+		<http:body>DOWN</http:body> </http:error-response>
+		  </http:listener>
+		<set-payload value="UP" /> 
+	</flow>
+	
+	<flow name="api-ready-flow">
+		<http:listener config-ref="api-httpListenerConfig" path="/ready">
+		<http:response statusCode="200" /> <http:error-response statusCode="500">
+		<http:body>DOWN</http:body> </http:error-response>
+		</http:listener>
+		<flow-ref name="check-all-dependencies-are-alive-subflow"/> <set-payload value="UP" />
+	</flow>
+	
+	<sub-flow name="check-all-dependencies-are-alive-subflow"> 
+		<logger message="#[output application/json --- dwl::logger::Logger::log(vars.logMsg)]" level="INFO"/>
+	</sub-flow>
+		
+</mule>

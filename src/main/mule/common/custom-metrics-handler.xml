@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:custom-metrics="http://www.mulesoft.org/schema/mule/custom-metrics"
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/custom-metrics http://www.mulesoft.org/schema/mule/custom-metrics/current/mule-custom-metrics.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="custom-metrics-init-vars-subflow" doc:id="43bb619c-1ff6-43f7-a783-5da2e1e20cad" >
+		<set-variable value="#[attributes.headers['country-code'] default 'gbl']" doc:name="Set Country Code" doc:id="1107d54b-6dbe-4403-bc54-bfe71a17ba23" variableName="countryCode" />
+		<set-variable value="#['NOT_FOUND']" doc:name="Set targetSystem" doc:id="711daf67-ae1b-4b90-bc22-c6b624a5e7c9" variableName="targetSystem"/>
+		<set-variable value="#['NOT_FOUND']" doc:name="Set sourceSystem" doc:id="8582e2ff-f899-466d-a86b-a91e3ca2db8b" variableName="sourceSystem"/>
+		<set-variable value="#['NOT_FOUND']" doc:name="Set entityName" doc:id="421d94e6-22d8-4667-9215-6355f89b73f4" variableName="entityName"/>
+	</sub-flow>
+	<sub-flow name="send-application-processing-status-metrics-subflow" doc:id="269c9042-b904-4440-8796-d2c9f2e67370" >
+		<set-variable value='#[{&#10;	"stage": "End" &#10;}]' doc:name="Set metadata" doc:id="e1bc9261-0b84-4331-8c86-6e0fe60798b7" variableName="metadata" />
+		<flow-ref doc:name="log-subflow" doc:id="a43af7af-ebb6-4086-ba8b-df0b974c8720" name="log-subflow" />
+		<choice doc:name="Choice" doc:id="df28166e-32e4-4302-8cef-23b1434bf492">
+			<when expression="#[isBlank(p('metrics.enabled')) == false]">
+				<ee:transform doc:name="Transform Message" doc:id="e31b14a4-0579-46a6-9a03-5658f859b0b8">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="processingStatus"><![CDATA[%dw 2.0
+output application/java
+---
+if(isBlank(vars.errorCode)) (
+    if(isBlank(vars.httpStatus)) 1
+    else if(vars.httpStatus >= 200 and vars.httpStatus < 300) 1
+    else 0
+) else (
+    0
+)]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<custom-metrics:send doc:name="Send Custom Metric" doc:id="7d75982d-a561-48cd-8da3-3f5b39ef69ed" metricName="ProcessingStatus">
+			<custom-metrics:dimensions>
+				<custom-metrics:dimension dimensionName="target" value="#[if(isBlank(vars.targetSystem)) 'NOT_FOUND' else vars.targetSystem]" />
+				<custom-metrics:dimension dimensionName="source" value="#[if(isBlank(vars.sourceSystem)) 'NOT_FOUND' else vars.sourceSystem]" />
+				<custom-metrics:dimension dimensionName="entityName" value="#[if(isBlank(vars.entityName)) 'NOT_FOUND' else vars.entityName]" />
+						<custom-metrics:dimension dimensionName="countryCode" value="#[if(isBlank(vars.countryCode)) 'NOT_FOUND' else vars.countryCode]" />
+						<custom-metrics:dimension dimensionName="apiLayer" value="${app.layer}" />
+			</custom-metrics:dimensions>
+			<custom-metrics:facts>
+				<custom-metrics:fact factName="success" value="#[vars.processingStatus]" />
+						<custom-metrics:fact factName="failed" value="#[if(vars.processingStatus == 1) 0 else 1]" />
+			</custom-metrics:facts>
+		</custom-metrics:send>
+			</when>
+		</choice>
+	</sub-flow>
+</mule>

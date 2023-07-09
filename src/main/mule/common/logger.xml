@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="log-subflow" doc:id="7ab2fcb4-aace-4a86-a4bf-b87c031e1424" >
+		<ee:transform doc:name="Compose Erro Log Message" doc:id="07eadd87-b924-470e-9c60-1049a3ee9d17" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="logMsg" ><![CDATA[%dw 2.0
+output application/java
+---
+{  
+	(message: vars['errorMessage']['title']) if(vars['logCategory'] == 'Exception'),
+	(message: vars.msg) if(vars['logCategory'] == 'Standard'),
+    transactionId: vars.correlationId,
+    appName: p('app.name'),
+    flowName: vars['flowName'],
+    businessProcessName: vars['businessProcessName'],
+    category: vars['logCategory'],
+    originatingApplication: vars['originatingApplication'],
+    destinationApplication: vars['destinationApplication'],
+    applicationErrorCode: vars['applicationErrorCode'],
+    errorCodeReturnedByDestination: vars['errorCodeReturnedByDestination'],
+    severity:  vars['logLevel'],
+    errorCode: if(vars['errorCode'] != null) vars['errorCode'] as String else null,
+    errorDescription: vars['errorMessage']['detail'],
+    elapsedTime: vars['curTime'],
+    metadata: vars['metadata']
+    
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="7461aa05-644f-4e9f-8a18-6eafe548b78e" >
+			<when expression="#[vars['logLevel'] == &quot;ERROR&quot;]">
+				<logger level="ERROR" doc:name="Log Error Message" doc:id="c8a9218a-4edb-41d9-b3f5-259843791ce0" message="#[output application/json --- dwl::logger::Logger::log(vars.logMsg)]" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log Message" doc:id="891cef7a-d350-414a-aec1-2e9cd6dba857" message="#[output application/json --- dwl::logger::Logger::log(vars.logMsg)]" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+		<sub-flow name="init-subflow" doc:id="58440e63-8f37-469a-b23d-c83edaac7fe8" >
+		<set-variable value="#[now()]" doc:name="Init current time" doc:id="8af680cf-c7cd-45bc-b343-90a4ddb80da3" variableName="curTime" />
+		<set-variable value="#['API Processing started']" doc:name="Set Message" doc:id="8c570833-1fbd-4337-873c-44559709cd13" variableName="msg"/>
+		<set-variable value="#[correlationId]" doc:name="Set correlationId" doc:id="622c0acc-720b-4cc8-b7bc-7c8de3048628" variableName="correlationId"/>
+		<set-variable value="#[null]" doc:name="Set businessProcessName" doc:id="0b9833c9-9a99-4a86-b7c8-97766a59319f" variableName="businessProcessName"/>
+		<set-variable value="#['Standard']" doc:name="Set Log Category" doc:id="e455d113-3dad-4ba0-b90d-990d17945288" variableName="logCategory"/>
+		<set-variable value="#[attributes.headers.'client_id' default null]" doc:name="Set originatingApplication" doc:id="21f88cc5-3b8e-4e45-9ce8-ff272817cfa5" variableName="originatingApplication"/>
+		<set-variable value='#[{&#10;	"stage": "Start" &#10;}]' doc:name="Set metadata" doc:id="1b4ad8a4-87b7-4c41-9583-2191eb8eb5ee" variableName="metadata" />
+		<set-variable value="#[null]" doc:name="Set destinationApplication" doc:id="7b86343d-e399-4e7b-ba96-e36b1e2eb094" variableName="destinationApplication"/>
+		<set-variable value="#[null]" doc:name="Set applicationErrorCode" doc:id="6131c420-3d51-42bf-8b9a-eae71bd42c1b" variableName="applicationErrorCode"/>
+		<set-variable value="#[null]" doc:name="Set errorCodeReturnedByDestination" doc:id="7d0b5e1a-3c62-4286-9c41-47507db412d4" variableName="errorCodeReturnedByDestination"/>
+		<set-variable value="#[flow.name]" doc:name="Set Flow Name" doc:id="f058486a-0c33-46ca-ba8b-25ddc4098d9c" variableName="flowName"/>
+		<flow-ref doc:name="log-subflow" doc:id="6a61cf4f-e779-447b-87c9-c57166351c9f" name="log-subflow"/>
+		<set-variable value="#[null]" doc:name="Reset metadata" doc:id="99abaa9c-92b6-4d93-a891-bf0a1c9d6412" variableName="metadata" />
+		<set-variable value="#[null]" doc:name="reset flowName to null" doc:id="0aafa490-cc30-47de-9825-d461a722cbb8" variableName="flowName"/>
+		<set-variable value="#[null]" doc:name="reset msg to null" doc:id="fe92ca17-85b2-4b22-ac04-416ef370b879" variableName="msg"/>
+	</sub-flow>
+</mule>
