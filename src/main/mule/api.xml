@@ -153,7 +153,7 @@ output application/json
 			</on-error-propagate>
 		</error-handler>
 	</flow>
-	<flow name="put:\Users\(id):application\json:api-config">
+	<flow name="put:\Users\(id):application\scim+json:api-config">
 		<ee:transform>
 			<ee:variables>
 				<ee:set-variable variableName="id">attributes.uriParams.'id'
@@ -195,7 +195,7 @@ output application/json
 			</on-error-continue>
 		</error-handler>
 	</flow>
-	<flow name="put:\Groups\(id):application\json:api-config">
+	<flow name="put:\Groups\(id):application\scim+json:api-config">
 		<ee:transform>
 			<ee:variables>
 				<ee:set-variable variableName="id">attributes.uriParams.'id'
@@ -278,7 +278,7 @@ output application/json
 			</on-error-continue>
 		</error-handler>
 	</flow>
-	<flow name="patch:\Users\(id):application\json:api-config">
+	<flow name="patch:\Users\(id):application\scim+json:api-config">
 		<ee:transform>
 			<ee:variables>
 				<ee:set-variable variableName="id">attributes.uriParams.'id'
@@ -324,7 +324,7 @@ vars.currentPayload update "active" with payload.Operations[0].value.active]]></
 		</choice>
 		<os:store doc:name="Store" doc:id="d5bd1ac4-2aa4-4459-8f69-f8b7481f58b7" key="#[vars.key]" objectStore="Object_store"/>
 	</flow>
-	<flow name="patch:\Groups\(id):application\json:api-config">
+	<flow name="patch:\Groups\(id):application\scim+json:api-config">
 		<ee:transform>
 			<ee:variables>
 				<ee:set-variable variableName="id">attributes.uriParams.'id'
@@ -841,7 +841,7 @@ output application/json
             </ee:message>
         </ee:transform>
     </flow>
-    <flow name="post:\Users:application\json:api-config">
+    <flow name="post:\Users:application\scim+json:api-config">
 		<ee:transform doc:name="Transform Message" doc:id="cb03d6be-237f-48ff-9255-fbcc458ef11c">
 			<ee:message>
 			</ee:message>
@@ -862,7 +862,7 @@ Crypto::SHA1(data as Binary)
 				<ee:set-variable variableName="key"><![CDATA[%dw 2.0
 output application/java
 ---
-payload.userName ++ ":" ++ vars.hash]]></ee:set-variable>
+(payload.userName default "") ++ ":" ++ (vars.hash default "")]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<ee:transform doc:name="Transform Message" doc:id="8c168537-8f2d-4297-8bd2-6922e9f9067f">
@@ -896,7 +896,7 @@ output application/json
 				</on-error-continue>
 		</error-handler>
     </flow>
-	<flow name="post:\Groups:application\json:api-config">
+	<flow name="post:\Groups:application\scim+json:api-config">
         <ee:transform>
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0

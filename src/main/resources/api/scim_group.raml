@@ -17,7 +17,7 @@ get:
       200:
         description: The request has succeeded.
         body:
-          application/json:
+          application/scim+json:
             type: GroupCollection
             example: !include examples/sample_groups_get.json
 post:
@@ -25,12 +25,12 @@ post:
     Authorization:
       type: string
   body:
-    application/json: GroupDefinition
+    application/scim+json: GroupDefinition
   responses:
     201:
       description: The group has been created.
       body:
-        application/json:
+        application/scim+json:
           type: Group
           example: !include examples/sample_group_get.json
 /{id}:
@@ -42,7 +42,7 @@ post:
       200:
         description: The request has succeeded.
         body:
-          application/json:
+          application/scim+json:
             type: Group
             example: !include examples/sample_group_get.json
       404:
@@ -52,12 +52,12 @@ post:
       Authorization:
         type: string
     body:
-      application/json: Group
+      application/scim+json: Group
     responses:
       200:
         description: Group replaced.
         body:
-          application/json:
+          application/scim+json:
             type: Group
       404:
         description: "Resource not found"
@@ -66,12 +66,12 @@ post:
       Authorization:
         type: string
     body:
-      application/json: GroupPatchOp
+      application/scim+json: GroupPatchOp
     responses:
       200:
         description: Group replaced.
         body:
-          application/json:
+          application/scim+json:
             type: Group
       404:
         description: "Resource not found"
