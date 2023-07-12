@@ -1,0 +1,37 @@
+%dw 2.0
+
+type auto_5ba4cbd3_acd0_479d_8024_c6ea669435bb_Input_Payload = {
+  displayName?: String, 
+  externalId?: String, 
+  active: Boolean, 
+  groups?: Array<{    display: String,     value: String,     _?: Any  } {"description": "The user groups"}> {"description": "List of user groups"}, 
+  locale?: String, 
+  userName: String, 
+  "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"?: {
+    costCenter: String, 
+    employeeNumber: String, 
+    _?: Any
+  } {"description": "Custom enterprise attributes from SCIM"}, 
+  emails: Array<{    display?: String,     "type": String,     value: String,     primary: Boolean,     _?: Any  } {"description": "The user email"}> {"description": "The list of emails"}, 
+  password?: String, 
+  meta?: {
+    location: String, 
+    resourceType: String, 
+    _?: Any
+  } {"description": "User metadata"}, 
+  schemas: Array<String> {"description": "The list of schemas"}, 
+  name: {
+    familyName: String, 
+    givenName: String, 
+    middleName?: String, 
+    _?: Any
+  } {"description": "The user's full name"}, 
+  id?: String, 
+  "urn:ietf:params:scim:schemas:extension:oktaprise:2.0:User"?: {
+    badge: String, 
+    machine: String, 
+    _?: Any
+  } {"description": "Custom attributes from Oktaprise"}, 
+  _?: Any
+} {"description": "User entry"}
+

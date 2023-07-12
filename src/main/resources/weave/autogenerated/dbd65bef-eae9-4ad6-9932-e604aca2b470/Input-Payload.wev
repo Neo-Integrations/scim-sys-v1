@@ -1,0 +1,10 @@
+%dw 2.0
+
+type auto_dbd65bef_eae9_4ad6_9932_e604aca2b470_Input_Payload = {
+  schemas: Array<String> {"description": "The list of schemas"}, 
+  active?: Boolean, 
+  id?: String, 
+  Operations?: Array<{    op: String,     value: {      active: Boolean,       _?: Any    },     _?: Any  }> {"description": "Patch operation details"}, 
+  _?: Any
+} {"description": "Patch User"}
+

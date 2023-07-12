@@ -48,7 +48,7 @@ trim(emailAddress replace '"' with "")]]></ee:set-variable>
 			variableName="offset" />
 	</sub-flow>
 
-	<flow name="update-user-flow">
+	<flow name="update-user-flow" doc:id="5ba4cbd3-acd0-479d-8024-c6ea669435bb">
 		<ee:transform>
 			<ee:variables>
 				<ee:set-variable variableName="id">attributes.uriParams.'id'
@@ -155,7 +155,7 @@ output application/json
 		</error-handler>
 	</flow>
 
-	<flow name="deactivate-user-flow">
+	<flow name="deactivate-user-flow" doc:id="dbd65bef-eae9-4ad6-9932-e604aca2b470">
 		<ee:transform>
 			<ee:variables>
 				<ee:set-variable variableName="id">attributes.uriParams.'id'
@@ -212,7 +212,7 @@ vars.currentPayload update "active" with payload.Operations[0].value.active]]></
 			doc:id="f48d9165-34a3-4c78-b10e-be7d6e0a9f53" key="#[vars.key]"
 			objectStore="Object_store" />
 	</flow>
-	<flow name="read-user-details-flow">
+	<flow name="read-user-details-flow" doc:id="f8f7b4c8-d31b-4741-a09a-e4b86f0256ee">
 		<ee:transform>
 			<ee:variables>
 				<ee:set-variable variableName="id">attributes.uriParams.'id'
@@ -309,7 +309,7 @@ output application/java
 		<ee:transform doc:name="Transform Message" doc:id="2ac86210-4a28-4c07-92d0-865506dd9c4a" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output text/json
+output application/json
 ---
 {
   schemas: [
@@ -349,7 +349,7 @@ output text/json
 				<ee:set-variable variableName="hash"><![CDATA[%dw 2.0
 output application/java
 import dw::Crypto
-var data = write(payload, "application/json")
+var data = write(payload default {}, "application/json")
 ---
 Crypto::SHA1(data as Binary)
 ]]></ee:set-variable>
@@ -362,7 +362,7 @@ Crypto::SHA1(data as Binary)
 				<ee:set-variable variableName="key"><![CDATA[%dw 2.0
 output application/java
 ---
-(payload.userName default "") ++ ":" ++ (vars.hash default "")]]></ee:set-variable>
+(payload.userName default "") ++ ":" ++ (vars.hash default "") as String]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<ee:transform doc:name="Transform Message" doc:id="f3522ef8-93fe-40e0-968c-71970e8a5812">

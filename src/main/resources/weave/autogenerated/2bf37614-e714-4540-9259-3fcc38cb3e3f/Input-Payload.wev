@@ -1,0 +1,23 @@
+%dw 2.0
+
+type auto_2bf37614_e714_4540_9259_3fcc38cb3e3f_Input_Payload = {
+  name?: {
+    familyName: String, 
+    givenName: String, 
+    middleName?: String, 
+    _?: Any
+  } {"description": "The full name of the user"}, 
+  active?: Boolean, 
+  "urn:ietf:params:scim:schemas:extension:oktaprise:2.0:User"?: {
+    badge: String, 
+    machine: String, 
+    _?: Any
+  } {"description": "Oktaprise custom schema and attributes"}, 
+  "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"?: {
+    costCenter: String, 
+    employeeNumber: String, 
+    _?: Any
+  } {"description": "Oktaprise custom schema and attributes"}, 
+  _?: Any
+} {"description": "Metadata for user creation"}
+

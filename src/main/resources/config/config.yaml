@@ -1,6 +1,6 @@
 http:
   private:
-    port: "8091"
+    port: "8081"
 
 app:
   name: "${project.artifactId}"

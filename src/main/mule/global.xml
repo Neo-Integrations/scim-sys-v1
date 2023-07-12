@@ -29,9 +29,10 @@
 		doc:name="Env specific properties"
 		doc:id="d71abc5b-ffb8-4274-a664-e9439f9acd04"
 		file="config/config-${mule.env}.yaml" />
-	<apikit:config name="api-router_belron" api="api.raml"
+	<apikit:config name="api-config" api="api/api.raml"
 		outboundHeadersMapName="outboundHeaders"
-		httpStatusVarName="httpStatus" />
+		httpStatusVarName="httpStatus" >
+	</apikit:config>
 		
 		
 	<http:listener-config

@@ -26,12 +26,9 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 			</http:error-response>
 		</http:listener>
 		<flow-ref doc:name="init-subflow" doc:id="7ba22b31-0cb3-43ef-9b1f-169527d356ba" name="init-subflow" />
-		<flow-ref doc:name="custom-metrics-init-vars-subflow" doc:id="691f6e96-ce4f-4d9d-bc8c-4b36d1e95285" name="custom-metrics-init-vars-subflow"/>
-		<apikit:router config-ref="api-router_belron" />
-		<flow-ref
-			doc:name="send-application-processing-status-metrics-subflow"
-			doc:id="33a9f341-3ee8-4bf2-92a4-7d005135886d"
-			name="send-application-processing-status-metrics-subflow" />
+		<flow-ref doc:name="custom-metrics-init-vars-subflow" doc:id="691f6e96-ce4f-4d9d-bc8c-4b36d1e95285" name="custom-metrics-init-vars-subflow" />
+		<apikit:router config-ref="api-config" />
+		<flow-ref doc:name="send-application-processing-status-metrics-subflow" doc:id="33a9f341-3ee8-4bf2-92a4-7d005135886d" name="send-application-processing-status-metrics-subflow" />
 		<error-handler ref="globalErrorHandler" />
 	</flow>
 	<flow name="put:\Users\(id):application\scim+json:api-config">
@@ -90,7 +87,7 @@ output application/json
 	</flow>
 	<flow name="patch:\Users\(id):application\scim+json:api-config">
 		<flow-ref doc:name="deactivate-user-flow"
-			name="deactivate-user-flow" />
+			name="deactivate-user-flow" doc:id="82d77114-bfec-44e1-8fdf-569901112d88"/>
 	</flow>
 	<flow name="patch:\Groups\(id):application\scim+json:api-config">
 		<ee:transform>
@@ -353,7 +350,7 @@ output application/json
 	</flow>
 	<flow name="get:\Users\(id):api-config">
 		<flow-ref name="read-user-details-flow"
-			doc:name="read-user-details-flow" />
+			doc:name="read-user-details-flow" doc:id="6cce7551-7c67-4ff3-bbd4-b37231440587"/>
 	</flow>
 	<flow name="get:\Groups\(id):api-config">
 		<ee:transform>
