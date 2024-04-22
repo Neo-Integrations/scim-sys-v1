@@ -1,23 +1,55 @@
 {
     "schemas": [
-        "urn:ietf:params:scim:schemas:core:2.0:User"
+        "urn:ietf:params:scim:schemas:core:2.0:User",
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
     ],
-    "userName": "aminul_haque3@gmail.com",
+    "userName": "aminul1983@gmail.com",
     "name": {
         "givenName": "Aminul",
-        "familyName": "Haque"
+        "familyName": "Haque",
+        "middleName": "Mohammad"
     },
     "emails": [
         {
             "primary": true,
-            "value": "aminul_haque3@gmail.com",
-            "type": "home"
+            "value": "aminul1983@gmail.com",
+            "type": "work"
         }
     ],
+    "title": "Mr",
     "displayName": "Aminul Haque",
+    "phoneNumbers": [
+        {
+            "primary": true,
+            "value": "07417469898",
+            "type": "work"
+        }
+    ],
+    "addresses": [
+        {
+            "primary": true,
+            "type": "work",
+            "streetAddress": "73 Ellerdine Road",
+            "locality": "London",
+            "region": "Middlesex",
+            "postalCode": "TW3 2PN",
+            "country": "UK"
+        }
+    ],
+    "preferredLanguage": "English",
     "locale": "en-UK",
-    "externalId": "28438472939042034-",
+    "userType": "W1",
+    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+        "employeeNumber": "263468268",
+        "costCenter": "L1",
+        "organization": "Autoglass UK",
+        "manager": {
+            "value": "1266234",
+            "displayName": "Jon Boxall"
+        }
+    },
+    "externalId": "00u6e715nieKWEbTk697",
     "groups": [],
-    "password": "238864723",
+    "password": "rN8Z9nGX",
     "active": true
 }

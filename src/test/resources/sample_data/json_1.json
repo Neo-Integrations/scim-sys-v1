@@ -1,0 +1,28 @@
+{
+  "name": {
+    "familyName": "Lesende",
+    "givenName": "Amina",
+    "middleName": "quaerat",
+    "": {
+      
+    }
+  },
+  "active": false,
+  "urn:ietf:params:scim:schemas:extension:oktaprise:2.0:User": {
+    "badge": "Sed",
+    "machine": "aperiam,",
+    "": {
+      
+    }
+  },
+  "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+    "costCenter": "non",
+    "employeeNumber": "sequi",
+    "": {
+      
+    }
+  },
+  "": {
+    
+  }
+}

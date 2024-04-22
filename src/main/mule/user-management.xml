@@ -365,6 +365,72 @@ output application/java
 (payload.userName default "") ++ ":" ++ (vars.hash default "") as String]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="59cbd5dc-4adf-4d82-b81e-e5e3eebfbd35">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var countryCode = "US"
+var emailType = "W1"
+var phoneType = "W1"
+var workerType = "E" // E = Employee, C = Contractor / Contingent
+var actionCode = "HIRE" // HIRE = Employee and ADD_CWK = for Contingent Worker
+var businessUnitName = "Belron US" // Need a list of brand by country code
+var managerType = "LINE_MANAGER"
+---
+{
+    PersonNumber: payload.employeeNumber,
+    names: [
+        {
+            ("FirstName": payload.name.givenName)  if(payload.name.givenName != null),
+            ("MiddleNames": payload.name.middleName) if(payload.name.middleName != null),
+            ("LastName": payload.name.familyName) if(payload.name.familyName != null),
+            "LegislationCode": countryCode
+        }
+    ],
+    (emails: [
+        {
+            "EmailType": emailType,
+            "EmailAddress": payload.emails[0].value,
+            "PrimaryFlag": true
+        }
+    ]) if(payload.emails != null and sizeOf(payload.emails) > 0),
+    (phones: [
+        {
+            "PhoneType": phoneType,
+            "LegislationCode": countryCode,
+            "PhoneNumber": payload.primaryPhone,
+            //"AreaCode": "513",
+            //"CountryCodeNumber": "1",
+            "FromDate": now() as String {format: "uuuu-MM-dd"},
+            "PrimaryFlag": true
+        }
+    ]) if(payload.primaryPhone != null),
+    (workRelationships: [
+        {
+            LegalEmployerName: payload."urn:ietf:params:scim:schemas:extension:enterprise:2.0:User".organization,
+            WorkerType: workerType,
+            PrimaryFlag: true,
+            assignments: [
+                {
+                    ActionCode: actionCode,
+                    BusinessUnitName: businessUnitName,
+                    JobCode: payload.jobCode,
+                    LocationCode: payload.location,
+                    //DefaultExpenseAccount: "2000.739200.0000000.0000000.000.0000.0000.0000000.0000000",
+                    UserPersonType: payload.userType,
+                    (managers: [
+                        {
+                            "ManagerAssignmentNumber": payload.managerId,
+                            "ManagerType": managerType
+                        }
+                    ]) if(payload.managerId != null)
+                }
+            ]
+        }
+    ]) if(payload."urn:ietf:params:scim:schemas:extension:enterprise:2.0:User".organization != null)
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 		<ee:transform doc:name="Transform Message" doc:id="f3522ef8-93fe-40e0-968c-71970e8a5812">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0

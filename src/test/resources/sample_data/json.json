@@ -1,0 +1,24 @@
+{
+    "schemas": [
+        "urn:ietf:params:scim:schemas:core:2.0:User"
+    ],
+    "userName": "aminul_haque3@gmail.com",
+    "employeeNumber": "23864823",
+    "name": {
+        "givenName": "Aminul",
+        "familyName": "Haque"
+    },
+    "emails": [
+        {
+            "primary": true,
+            "value": "aminul_haque3@gmail.com",
+            "type": "home"
+        }
+    ],
+    "displayName": "Aminul Haque",
+    "locale": "en-UK",
+    "externalId": "28438472939042034-",
+    "groups": [],
+    "password": "238864723",
+    "active": true
+}
